@@ -35,8 +35,7 @@ class _MyHomePageState extends State<MyHomePage> {
         ),
         title: const Text("Centros de Salud"),
       ),
-      body:       
-      InAppWebView(
+      body:      InAppWebView(
         initialUrlRequest: URLRequest(
           url: WebUri.uri(Uri.parse("http://cs.losbillares.com")),
         ),
