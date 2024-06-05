@@ -24,6 +24,8 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
+  late InAppWebViewController webViewController;
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -35,7 +37,7 @@ class _MyHomePageState extends State<MyHomePage> {
         ),
         title: const Text("Centros de Salud"),
       ),
-      body:      InAppWebView(
+      body: InAppWebView(
         initialUrlRequest: URLRequest(
           url: WebUri.uri(Uri.parse("http://cs.losbillares.com")),
         ),
@@ -47,11 +49,33 @@ class _MyHomePageState extends State<MyHomePage> {
           disallowOverScroll: true,
         ),
         onWebViewCreated: (controller) {
-          // Puedes añadir cualquier código adicional aquí si lo necesitas
+          webViewController = controller;
         },
         shouldOverrideUrlLoading: (controller, navigationAction) async {
           // Manejo de la navegación de la URL si es necesario
           return NavigationActionPolicy.ALLOW;
+        },
+        onLoadStop: (controller, url) async {
+          // Solución para: Cuando se pulsa lupa, el menú contextual aparece a la derecha, quedando oculto
+          String jsCode = """
+            console.log('Page loaded');
+            (function() {
+              const observer = new MutationObserver((mutations) => {
+                mutations.forEach((mutation) => {
+                  var popover = document.querySelector('.popover');
+                   if (popover) {
+                    console.log('Popover found, modifying styles');
+                    popover.classList.remove('fade', 'right', 'in');
+                    popover.style.top = '0px';
+                    popover.style.left = '0px';
+                  }
+                });
+              });
+              observer.observe(document.body, { childList: true, subtree: true });
+            })();
+          """;
+          await controller.evaluateJavascript(source: jsCode);
+
         },
       ),
     );
