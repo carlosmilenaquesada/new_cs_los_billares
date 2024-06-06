@@ -20,21 +20,16 @@ class MyHomePage extends StatefulWidget {
   const MyHomePage({super.key});
 
   @override
-  _MyHomePageState createState() => _MyHomePageState();
+  MyHomePageState createState() => MyHomePageState();
 }
 
-class _MyHomePageState extends State<MyHomePage> {
-  late InAppWebViewController webViewController;
-
+class MyHomePageState extends State<MyHomePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       drawer: const Drawer(),
       appBar: AppBar(
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () => Navigator.of(context).pop(),
-        ),
+        
         title: const Text("Centros de Salud"),
       ),
       body: InAppWebView(
@@ -48,23 +43,17 @@ class _MyHomePageState extends State<MyHomePage> {
           allowsInlineMediaPlayback: true,
           disallowOverScroll: true,
         ),
-        onWebViewCreated: (controller) {
-          webViewController = controller;
-        },
         shouldOverrideUrlLoading: (controller, navigationAction) async {
-          // Manejo de la navegación de la URL si es necesario
           return NavigationActionPolicy.ALLOW;
         },
         onLoadStop: (controller, url) async {
-          // Solución para: Cuando se pulsa lupa, el menú contextual aparece a la derecha, quedando oculto
+          // Solución para: Cuando se pulsa lupa, el menú contextual aparece a la derecha, quedando oculto. Este código lo situa en mitad de la pantalla.
           String jsCode = """
-            console.log('Page loaded');
             (function() {
               const observer = new MutationObserver((mutations) => {
                 mutations.forEach((mutation) => {
                   var popover = document.querySelector('.popover');
                    if (popover) {
-                    console.log('Popover found, modifying styles');
                     popover.classList.remove('fade', 'right', 'in');
                     popover.style.top = '0px';
                     popover.style.left = '0px';
@@ -76,6 +65,31 @@ class _MyHomePageState extends State<MyHomePage> {
           """;
           await controller.evaluateJavascript(source: jsCode);
 
+          String jsCode1 = """
+             console.log('Page loaded');
+            (function() {
+              if (window.innerWidth <= 403) {
+                var mainDiv = document.querySelector('.col-sm-12.actionBar');
+                var actionsDiv = document.querySelector('.search.form-group');
+                
+                if (actionsDiv) {
+                  console.log('actions div found, applying styles');
+                  
+                  mainDiv.style.setProperty('display', 'flex');
+                  mainDiv.style.setProperty('flex-direction', 'column');
+
+                  actionsDiv.style.setProperty('margin-right', '0px');
+                  actionsDiv.style.setProperty('margin-bottom', '10px');
+
+                } else {
+                  console.log('actions div not found');
+                }
+              } else {
+                console.log('Screen width greater than 383px, styles not applied');
+              }
+            })();
+          """;
+          await controller.evaluateJavascript(source: jsCode1);
         },
       ),
     );
